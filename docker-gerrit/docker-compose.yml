@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  gerrit:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: gerrit_server
+    ports:
+      - "0.0.0.0:29418:29418"
+      - "0.0.0.0:8081:8080"
+    volumes:
+      - gerrit_etc:/var/gerrit/etc
+      - gerrit_git:/var/gerrit/git
+      - gerrit_db:/var/gerrit/db
+      - gerrit_index:/var/gerrit/index
+      - gerrit_cache:/var/gerrit/cache
+    environment:
+      - CANONICAL_WEB_URL=http://localhost:8081
+      - HTTPD_LISTEN_URL=http://*:8080
+      - GERRIT_INIT_ARGS=--install-plugin=download-commands --install-plugin=commit-message-length-validator --install-plugin=reviewnotes --install-plugin=replication
+    networks:
+      - gerrit_network
+    restart: unless-stopped
+
+volumes:
+  gerrit_etc:
+    name: gerrit_prod_etc
+  gerrit_git:
+    name: gerrit_prod_git
+  gerrit_db:
+    name: gerrit_prod_db
+  gerrit_index:
+    name: gerrit_prod_index
+  gerrit_cache:
+    name: gerrit_prod_cache
+
+networks:
+  gerrit_network:
+    name: gerrit_prod_network
+    driver: bridge

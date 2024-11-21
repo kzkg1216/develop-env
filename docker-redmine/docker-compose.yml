@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  redmine:
+    image: redmine:5.1
+    container_name: redmine
+    environment:
+      REDMINE_DB_POSTGRES: redmine_db
+      REDMINE_DB_DATABASE: redmine
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD: redmine_password
+      REDMINE_SECRET_KEY_BASE: 8a7b3f5e2d1c9h4i6k8m0n2p4q6r8t0v2x4z6b8d0f2h4j6l8n0p2r4t6v8x0z2b4d6f8h0j2l4n6p8r0t2v4x6z8b0d2f4h6j8l0n2p4q6s8u0w2y4
+      REDMINE_HOST: 0.0.0.0
+    ports:
+      - "0.0.0.0:3000:3000"
+    volumes:
+      - redmine_files:/usr/src/redmine/files
+      - redmine_plugins:/usr/src/redmine/plugins
+      - redmine_themes:/usr/src/redmine/public/themes
+    depends_on:
+      - redmine_db
+    networks:
+      - redmine_network
+    restart: unless-stopped
+
+  redmine_db:
+    image: postgres:13
+    container_name: redmine_db
+    environment:
+      POSTGRES_DB: redmine
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine_password
+    volumes:
+      - redmine_db_data:/var/lib/postgresql/data
+    networks:
+      - redmine_network
+    restart: unless-stopped
+
+volumes:
+  redmine_files:
+    name: redmine_prod_files
+  redmine_plugins:
+    name: redmine_prod_plugins
+  redmine_themes:
+    name: redmine_prod_themes
+  redmine_db_data:
+    name: redmine_prod_db_data
+
+networks:
+  redmine_network:
+    name: redmine_prod_network
+    driver: bridge

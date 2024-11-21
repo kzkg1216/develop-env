@@ -1,0 +1,56 @@
+version: '3.4'
+
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "Example Org"
+      LDAP_DOMAIN: "example.com"
+      LDAP_ADMIN_PASSWORD: "adminpassword"
+      LDAP_CONFIG_PASSWORD: "configpassword"
+      LDAP_READONLY_USER: "false"
+      LDAP_TLS: "false"
+    ports:
+      - "0.0.0.0:389:389"
+      - "0.0.0.0:636:636"
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    networks:
+      - ldap_network
+    command: --copy-service
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-D", "cn=admin,dc=example,dc=com", "-w", "adminpassword", "-b", "dc=example,dc=com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  lam:
+    image: ghcr.io/ldapaccountmanager/lam:8.3
+    container_name: lam
+    environment:
+      - LDAP_SERVER=ldap://ldap:389
+      - LDAP_DOMAIN=example.com
+      - LDAP_BASE_DN=dc=example,dc=com
+      - LAM_LANG=ja_JP
+      - LAM_PASSWORD=lam
+    ports:
+      - "0.0.0.0:8080:80"
+    depends_on:
+      ldap:
+        condition: service_healthy
+    networks:
+      - ldap_network
+    volumes:
+      - lam_config:/var/lib/ldap-account-manager/config
+    restart: unless-stopped
+
+networks:
+  ldap_network:
+    driver: bridge
+
+volumes:
+  ldap_data:
+  ldap_config:
+  lam_config:
